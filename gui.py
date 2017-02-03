@@ -7,7 +7,6 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from pyqtgraph import PlotWidget
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -25,6 +24,8 @@ class Ui_Form(object):
         self.gb_channels = QtWidgets.QGroupBox(Form)
         self.gb_channels.setMaximumSize(QtCore.QSize(200, 16777215))
         self.gb_channels.setObjectName("gb_channels")
+        self.gb_channels_layout = QtWidgets.QGridLayout(self.gb_channels)
+        self.gb_channels_layout.setObjectName("gb_channels_layout")
         self.verticalLayout.addWidget(self.gb_channels)
         self.btn_chart = QtWidgets.QPushButton(Form)
         self.btn_chart.setObjectName("btn_chart")
@@ -44,3 +45,5 @@ class Ui_Form(object):
         self.gb_channels.setTitle(_translate("Form", "Channels"))
         self.btn_chart.setText(_translate("Form", "Redraw ECG"))
         self.btn_openFile.setText(_translate("Form", "Open file"))
+
+from pyqtgraph import PlotWidget
