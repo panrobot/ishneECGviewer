@@ -7,7 +7,7 @@ class ECG:
     '''Checks validity of selected .ecg file. If it is valid .ecg file creates an instance with all the data stored in .ecg file''' 
     def __init__(self, filename, enc='cp1250'):
         '''Default encoding is set to cp1250 - set accordingly to your needs'''
-        leadNames = {0:'Unknown', 1:'Bipolar', 2:'X biploar', 3:'Y bipolar', 4:'Z biploar', \
+        self.leadNamesDict = {0:'Unknown', 1:'Bipolar', 2:'X biploar', 3:'Y bipolar', 4:'Z biploar', \
             5:'I', 6:'II', 7:'III', 8:'VR', 9:'VL', 10:'VF', \
             11:'V1', 12:'V2', 13:'V3', 14:'V4', 15:'V5', 16:'V6', \
             17:'ES', 18:'AS', 19:'AI'}
@@ -56,23 +56,24 @@ class ECG:
             for i in range(0,3):
                 dof.append(int.from_bytes(ecgFile.read(2), byteorder='little', signed=True))
             self.dateOfFileCreation = datetime(dor[2], dor[1], dor[0])
+            #testStart - time of test begining HH:MM:SS
             testStart = list()
             for i in range(0,3):
                 testStart.append(int.from_bytes(ecgFile.read(2), byteorder='little', signed=True))
-            self.datetimeStartOfTest = datetime(dor[2],dor[1],dor[0],testStart[2],testStart[1],testStart[0])
+            self.datetimeStartOfTest = datetime(dor[2],dor[1],dor[0],testStart[0],testStart[1],testStart[2])
             self.numberOfLeads = int.from_bytes(ecgFile.read(2), byteorder='little', signed=True)
             self.leadsSpecs = list()
             self.leadsNames = list()
             for i in range(0,12):
                 spec = int.from_bytes(ecgFile.read(2), byteorder='little', signed=True)
                 self.leadsSpecs.append(spec)
-                self.leadsNames.append(leadNames[spec])
+                self.leadsNames.append(self.leadNamesDict[spec])
             self.leadsQuality = list()
             for i in range(0,12):
                 self.leadsQuality.append(int.from_bytes(ecgFile.read(2), byteorder='little', signed=True))
             self.leadsResolution = list()
             for i in range(0,12):
-                self.leadsResolution.append(int.from_bytes(ecgFile.read(2), byteorder='little', signed=True))
+                self.leadsResolution.append(int.from_bytes(ecgFile.read(2), byteorder='little', signed=False))
             self.pacemaker = int.from_bytes(ecgFile.read(2), byteorder='little', signed=True)
             self.recorderType = ecgFile.read(40).decode(self.enc)
             self.recorderType = self.recorderType.split('\x00', 1)[0]
