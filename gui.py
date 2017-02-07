@@ -11,14 +11,30 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(781, 588)
+        Form.resize(873, 914)
         self.gridLayout_3 = QtWidgets.QGridLayout(Form)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.graphicsView = PlotWidget(Form)
+        self.scrollArea = QtWidgets.QScrollArea(Form)
+        self.scrollArea.setMinimumSize(QtCore.QSize(760, 900))
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1014, 2014))
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setObjectName("gridLayout")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.graphicsView = GraphicsLayoutWidget(self.scrollAreaWidgetContents)
+        self.graphicsView.setMinimumSize(QtCore.QSize(1000, 2000))
         self.graphicsView.setObjectName("graphicsView")
-        self.horizontalLayout_2.addWidget(self.graphicsView)
+        self.horizontalLayout.addWidget(self.graphicsView)
+        self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.horizontalLayout_2.addWidget(self.scrollArea)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         self.gb_channels = QtWidgets.QGroupBox(Form)
@@ -45,5 +61,6 @@ class Ui_Form(object):
         self.gb_channels.setTitle(_translate("Form", "Channels"))
         self.btn_chart.setText(_translate("Form", "Redraw ECG"))
         self.btn_openFile.setText(_translate("Form", "Open file"))
+        
 
-from pyqtgraph import PlotWidget
+from pyqtgraph import GraphicsLayoutWidget
