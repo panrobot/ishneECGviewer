@@ -11,7 +11,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(873, 914)
+        Form.resize(912, 914)
+        Form.setLocale(QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates))
         self.gridLayout_3 = QtWidgets.QGridLayout(Form)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
@@ -43,6 +44,12 @@ class Ui_Form(object):
         self.gb_channels_layout = QtWidgets.QGridLayout(self.gb_channels)
         self.gb_channels_layout.setObjectName("gb_channels_layout")
         self.verticalLayout.addWidget(self.gb_channels)
+        self.btn_allLeads = QtWidgets.QPushButton(Form)
+        self.btn_allLeads.setEnabled(False)
+        self.btn_allLeads.setMinimumSize(QtCore.QSize(130, 0))
+        self.btn_allLeads.setCheckable(True)
+        self.btn_allLeads.setObjectName("btn_allLeads")
+        self.verticalLayout.addWidget(self.btn_allLeads)
         self.btn_chart = QtWidgets.QPushButton(Form)
         self.btn_chart.setObjectName("btn_chart")
         self.verticalLayout.addWidget(self.btn_chart)
@@ -59,8 +66,8 @@ class Ui_Form(object):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
         self.gb_channels.setTitle(_translate("Form", "Channels"))
+        self.btn_allLeads.setText(_translate("Form", "Check All Leads"))
         self.btn_chart.setText(_translate("Form", "Redraw ECG"))
         self.btn_openFile.setText(_translate("Form", "Open file"))
-        
 
 from pyqtgraph import GraphicsLayoutWidget
