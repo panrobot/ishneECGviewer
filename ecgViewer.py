@@ -10,22 +10,6 @@ import pyqtgraph as pg
 import numpy as np
 import pandas as pd
 
-class CustomViewBox(pg.ViewBox):
-    def __init__(self, *args, **kwds):
-        pg.ViewBox.__init__(self, *args, **kwds)
-        self.setMouseMode(self.RectMode)
-        
-    ## reimplement right-click to zoom out
-    def mouseClickEvent(self, ev):
-        if ev.button() == QtCore.Qt.RightButton:
-            self.autoRange()
-            
-    def mouseDragEvent(self, ev):
-        if ev.button() == QtCore.Qt.RightButton:
-            ev.ignore()
-        else:
-            pg.ViewBox.mouseDragEvent(self, ev)
-
 class CAxisTime(pg.AxisItem):
     ## Formats axis label to human readable time.
     # @param[in] values List of \c time_t.
@@ -45,8 +29,6 @@ class DateAxis(pg.AxisItem):
         strns = []
         rng = int(max(values) - min(values))
         
-        #if rng < 120:
-        #    return pg.AxisItem.tickStrings(self, values, scale, spacing)
         if rng < 3600*24:
             string = r'%H:%M:%S'
             label1 = r'%b %d -'
@@ -74,7 +56,6 @@ class DateAxis(pg.AxisItem):
             #label = datetime.fromtimestamp(min(values)).strftime(label1)+datetime.fromtimestamp(max(values)).strftime(label2)
         except ValueError:
             label = ''
-        #self.setLabel(text=label)
         return strns
 
 class appWindow(QtGui.QWidget):
@@ -85,6 +66,7 @@ class appWindow(QtGui.QWidget):
         self.ui.setupUi(self)
         self.ui.btn_openFile.clicked.connect(self.getFile)
         self.ui.btn_chart.clicked.connect(self.drawChart)
+        self.ui.btn_allLeads.toggled.connect(self.toggleCheckboxes)
         
         
     def getFile(self):
@@ -105,64 +87,82 @@ class appWindow(QtGui.QWidget):
             self.curves = []
             self.leads = {}
             for idx, (position, lead) in enumerate(zip(positions, self.ecg.leadsNames)):
-                #c = pg.PlotCurveItem(pen=(idx, self.ecg.numberOfLeads*1.3), name=lead)
                 self.leads[lead] = idx
-                #self.plot.addItem(c)
-                #c.setPos(0,idx*6)
-                #self.curves.append(c)
                 self.checkbox = QtWidgets.QCheckBox(lead, self.ui.gb_channels)
                 self.checkbox.setObjectName(lead)
-                #self.checkbox.stateChanged.connect(self.drawChart)
                 self.ui.gb_channels_layout.addWidget(self.checkbox, position[0], position[1])
             checkbox = self.ui.gb_channels.findChild(QtWidgets.QCheckBox, self.ecg.leadsNames[0])
             checkbox.toggle()
             
+            btn_chbox = self.findChild(QtWidgets.QPushButton, 'btn_allLeads')
+            btn_chbox.setEnabled(True)
+            
     def drawChart(self):
+        if self.windowTitle() == 'Form':
+            self.getFile()
         leads = []
+        leadsNames = []
+        nr = 0
         for chbox in self.ui.gb_channels.findChildren(QtWidgets.QCheckBox):
             if chbox.isChecked():
+                color = pg.intColor(nr, self.ecg.numberOfLeads*1.3)
+                chbox.setStyleSheet('color: {0}'.format(color.name()))
                 leads.append(self.leads[chbox.objectName()])
-        #indexes = drange(self.ecg.datetimeStartOfTest, self.ecg.datetimeEndOfTest, timedelta(seconds=1/self.ecg.samplingRate))
-        Freq = str(int((1/self.ecg.samplingRate)*10**9)) + 'N'
-        #indexes = np.arange(self.ecg.datetimeStartOfTest, self.ecg.datetimeEndOfTest,timedelta(seconds=1/self.ecg.samplingRate))
+                leadsNames.append(chbox.objectName())
+                nr += 1
+        if len(leads) < 1:
+            checkbox = self.ui.gb_channels.findChild(QtWidgets.QCheckBox, self.ecg.leadsNames[0])
+            checkbox.toggle()
+            for chbox in self.ui.gb_channels.findChildren(QtWidgets.QCheckBox):
+                if chbox.isChecked():
+                    color = pg.intColor(nr, self.ecg.numberOfLeads*1.3)
+                    chbox.setStyleSheet('color: {0}'.format(color.name()))
+                    leads.append(self.leads[chbox.objectName()])
+                    leadsNames.append(chbox.objectName())
+                    nr += 1
+        #Freq = str(int((1/self.ecg.samplingRate)*10**9)) + 'N'
         indexes = np.arange(self.ecg.datetimeStartOfTest.timestamp(), self.ecg.datetimeEndOfTest.timestamp(),1/self.ecg.samplingRate)
         if len(indexes) > len(self.ecg.ecgInChannels[0]):
             indexes = indexes[0:len(self.ecg.ecgInChannels[0])]
-        #self.ui.graphicsView.plot(indexes, self.ecg.ecgInChannels[0].reshape(-1))
-        
-        step = 20*self.ecg.samplingRate
-        winsize = 100000 / step * 100
-        #winsize = int(len(indexes) / step)*100
+        step = 30*self.ecg.samplingRate
+        numberOfSamples = 10**5 #setting over 10**7 will take a lot of time to plot
+        if numberOfSamples > len(self.ecg.ecgInChannels[0]):
+            numberOfSamples = len(self.ecg.ecgInChannels[0])
+        winsize = len(leads)*numberOfSamples / step * 100
         self.ui.graphicsView.setMinimumSize(QtCore.QSize(1000,winsize))
-        ecg = self.ecg.ecgInChannels[6].reshape(-1)
         self.ui.graphicsView.clear()
-        #len(indexes)-step
-        
-        for idx, i in enumerate(range(0, 100000, step)):
+        for idx, i in enumerate(range(0, numberOfSamples, step)):
              axis1 = DateAxis(orientation='bottom')
              axis = CAxisTime(orientation='bottom')
-             for n, lead in enumerate(leads):
-                 c = pg.PlotCurveItem(pen=(n, self.ecg.numberOfLeads*1.3), name=lead)
-                 c.setData(x=indexes[i:i+step-1:2], y=ecg[i:i+step-1:2])
-                 self.plot.addItem(c)
-                 c.setPos(0,2*(n+1)*self.ecg.leadsResolution[0])
              self.plot = self.ui.graphicsView.addPlot(row=idx, col=0, axisItems={'bottom': axis}, enableMenu=False)
-             #p = self.ui.graphicsView.addPlot(axisItems={'bottom': axis}, enableMenu=False, name=self.ecg.leadNamesDict[lead])
-             self.plot.setYRange(-2*self.ecg.leadsResolution[0]*len(leads), 2*self.ecg.leadsResolution[0]*len(leads))
-             self.plot.setXRange(indexes[i], indexes[i+step-1])
+             for n, lead in enumerate(leads):
+                 ecg = self.ecg.ecgInChannels[lead].reshape(-1)
+                 c = pg.PlotDataItem(pen=(n, self.ecg.numberOfLeads*1.3), downsample=10, downsampleMethod='subsample', name=leadsNames[n])
+                 c.setData(x=indexes[i:i+step-1:4], y=ecg[i:i+step-1:4])
+                 self.plot.addItem(c)
+                 c.setPos(0,3*n*self.ecg.leadsResolution[0])
+                 self.plot.setYRange(-2*self.ecg.leadsResolution[0], 3*self.ecg.leadsResolution[0]*len(leads))
+                 self.plot.setXRange(indexes[i], indexes[i+step-1])
              self.plot.disableAutoRange()
              self.plot.setMouseEnabled(x=False, y=False)
-             #p.plot(x=indexes[i:i+step-1:2], y=ecg[i:i+step-1:2])
-             #self.ui.graphicsView.nextRow()
              
-        
+    def toggleCheckboxes(self):
+        btn = self.findChild(QtWidgets.QPushButton, 'btn_allLeads')
+        if btn.isChecked():
+            btn.setText('Uncheck All Leads')
+            for chbox in self.ui.gb_channels.findChildren(QtWidgets.QCheckBox):
+                if not chbox.isChecked():
+                    chbox.toggle()
+        else:
+            btn.setText('Check All Leads')
+            for chbox in self.ui.gb_channels.findChildren(QtWidgets.QCheckBox):
+                if chbox.isChecked():
+                    chbox.toggle()
             
-        
             
-            
+                
         
-        
-        
+             
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
